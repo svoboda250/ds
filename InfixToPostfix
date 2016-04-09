@@ -1,0 +1,162 @@
+/*
+ * CIS 27: Lab 1
+ * @author Jenny Hamer
+ * Program 2: Evaluate arithmethic expressions using a stack
+ * Step 1: create a filter InfixToPostfix to convert and print the expression --> postfix 
+ * Step 2: create an evaluator EvaluatePostfix that inputs a postfix expression, calculates & prints its evaluation
+ * (Print infix expression, postfix expression, and final result)
+ */
+package lab1;
+
+import java.util.*;
+
+class ArithmeticExpressionEvaluator {
+
+    String infix; // input --> expression to convert
+    String postfix = ""; // output expression in postfix / reverse Polish notation
+    StringBuffer createPost; // to build the output expression in postfix
+    Stack<String> operatorStack = new Stack<>(); // initialize empty stack to store operators
+    Stack<Double> numberStack = new Stack<>(); // the numbers in the expression will be pushed here
+
+    public ArithmeticExpressionEvaluator(String input) { // constructor for A.E.E. which takes an infix expression as input
+        infix = input;
+    }
+
+    // filter method: converts inputter infix expression to its postfix equivalent
+    // & prints both expressions to the console
+    int precedence(String t) {
+        // takes an operator token and returns its precendence
+        // precedence is as follows: "sqrt" & "**" --> 3 (highest), "*" & "/" --> 2, "+" & "-" --> 1
+        switch (t) {
+            case "sqrt":   // highest precedence operator
+            case "**":
+                return 3;
+            case "*":
+            case "/":
+                return 2;
+            case "+":
+            case "-":
+                return 1;   // lowest precedence operator
+            case "(":
+            case ")":
+                return -1; // don't want to add this to the output expression
+            case " ": // to ignore spaces in inputted expression
+                return -1;
+        }
+        return -1;
+    }
+
+    boolean isOperator(String t) {
+        switch (t) {
+            case "sqrt":   // highest precedence operator
+            case "**":
+            case "*":
+            case "/":
+            case "+":
+            case "-":
+            case "(":
+            case ")":
+                return true;
+        }
+        return false;
+    }
+
+    public String InfixToPostfix(String in) {
+        infix = in;
+        String noSpaces = infix.replaceAll(" ", ""); // temp variable to determine length of expression w/o spaces
+        int infixLen = noSpaces.length();
+        createPost = new StringBuffer(infixLen);
+        Scanner scan = new Scanner(infix);
+        // check if there are more tokens to scan
+        while (scan.hasNext()) {
+            String token = scan.next(); // gets the next token in the scanner's input
+            if (isOperator(token)) {
+                if (token.equals("(")) { operatorStack.push(token); } // push the beginning left paren onto the stack 
+                else if (token.equals(")")) { 
+                    while (!operatorStack.peek().equals("(")) { 
+                        createPost.append(operatorStack.pop());
+                    }
+                } 
+                else {
+                    while (!operatorStack.isEmpty() && (precedence(operatorStack.peek()) >= precedence(token)) ) {
+                        if (precedence(operatorStack.peek()) > 0) {
+                            createPost.append(operatorStack.pop()); 
+                        } else { operatorStack.pop(); }
+                    }
+                }
+                operatorStack.push(token);
+            } else { // if the token is an operand
+                createPost.append(token);
+            }
+        }
+        while (!operatorStack.isEmpty()) {
+            if (precedence(operatorStack.peek()) > 0) {
+                createPost.append(operatorStack.pop()); 
+            } else { operatorStack.pop(); }
+//            createPost.append(operatorStack.pop());       
+        }
+        scan.close(); // no more elems to scan --> close the Scanner
+        postfix = createPost.toString();
+        return postfix; // returns the reformatted postfix expression
+    }
+
+    public static void main(String[] args) {
+        // testing the postfix expression translation
+        // entered expressions must have a space in between each element
+        String input1 = "( 1 + 2 ) * ( 3 / 4 )";
+        String input2 = "( 5 * 5 ) + ( 2 + 3 ) / ( 6 - 1 )";
+        String input3 = "1 + 2 * 3 / 4 - 5";
+        String input4 = "5 * 2 + 3 / 4 - 2";
+        String input5 = "4 + ( 8 / 2 ) * 2";
+        ArithmeticExpressionEvaluator test1 = new ArithmeticExpressionEvaluator(input1);
+        ArithmeticExpressionEvaluator test2 = new ArithmeticExpressionEvaluator(input2);
+        ArithmeticExpressionEvaluator test3 = new ArithmeticExpressionEvaluator(input3);
+        ArithmeticExpressionEvaluator test4 = new ArithmeticExpressionEvaluator(input4);
+        ArithmeticExpressionEvaluator test5 = new ArithmeticExpressionEvaluator(input5);
+        //String evaluation = EvaluatePostfix(expression);
+        //System.out.println("Final result: " + evaluation);
+        System.out.println("Before, in infix: " + input1);
+        String result1 = test1.InfixToPostfix(input1);
+        System.out.println("After, in postfix: " + result1 + "\n================");
+        
+        System.out.println("Before, in infix: " + input2);
+        String result2 = test2.InfixToPostfix(input2);
+        System.out.println("After, in postfix: " + result2 + "\n================");
+        
+        System.out.println("Before, in infix: " + input3);
+        String result3 = test3.InfixToPostfix(input3);
+        System.out.println("After, in postfix: " + result3 + "\n================");
+        
+        System.out.println("Before, in infix: " + input4);
+        String result4 = test4.InfixToPostfix(input4);
+        System.out.println("After, in postfix: " + result4 + "\n================");
+        
+        System.out.println("Before, in infix: " + input5);
+        String result5 = test5.InfixToPostfix(input5);
+        System.out.println("After, in postfix: " + result5 + "\n================");
+        
+    }
+}
+
+/* OUTPUT: 	
+Before, in infix: ( 1 + 2 ) * ( 3 / 4 )
+12+34/*
+After, in postfix: 12+34/* || correct expression: 1 2 + 3 4 / * 
+================
+Before, in infix: ( 5 * 5 ) + ( 2 + 3 ) / ( 6 - 1 )
+55*23+61-/+
+After, in postfix: 55*23+61-/+ || correct expression: 5 5 * 2 3 + 6 1 - / + 
+================
+Before, in infix: 1 + 2 * 3 / 4 - 5
+123*4/+5-
+After, in postfix: 123*4/+5- || correct expression: 1 2 3 * 4 / + 5 - 
+================
+Before, in infix: 5 * 2 + 3 / 4 - 2  
+52*34/+2-
+After, in postfix: 52*34/+2- || correct expression: 5 2 * 3 4 / + 2 -
+================
+Before, in infix: 4 + ( 8 / 2 ) * 2
+482/2*+
+After, in postfix: 482/2*+ || correct expression: 4 8 2 / 2 * + 
+================
+ */
